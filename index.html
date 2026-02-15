@@ -4,57 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מערכת ניהול עובדים - שמיר בגליל</title>
+    
+    <!-- טעינת נתונים מלאים -->
+    <script src="farm-data.js"></script>
+    
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap');
-        
-        body {
-            font-family: 'Heebo', sans-serif;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.3s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .pulse-green {
-            animation: pulseGreen 2s infinite;
-        }
-        
-        @keyframes pulseGreen {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            50% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-        }
-
-        .modal-overlay {
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-        }
+        body { font-family: 'Heebo', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .pulse-green { animation: pulseGreen 2s infinite; }
+        @keyframes pulseGreen { 0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 50% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } }
+        .modal-overlay { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen">
@@ -63,75 +31,22 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // מילון תרגום לתאילנדית
-        const THAI_TRANSLATIONS = {
-            // ימים בשבוע
-            'ראשון': 'วันอาทิตย์',
-            'שני': 'วันจันทร์',
-            'שלישי': 'วันอังคาร',
-            'רביעי': 'วันพุธ',
-            'חמישי': 'วันพฤหัสบดี',
-            'שישי': 'วันศุกร์',
-            'שבת': 'วันเสาร์',
-            
-            // חודשים
-            'ינואר': 'มกราคม',
-            'פברואר': 'กุมภาพันธ์',
-            'מרץ': 'มีนาคม',
-            'אפריל': 'เมษายน',
-            'מאי': 'พฤษภาคม',
-            'יוני': 'มิถุนายน',
-            'יולי': 'กรกฎาคม',
-            'אוגוסט': 'สิงหาคม',
-            'ספטמבר': 'กันยายน',
-            'אוקטובר': 'ตุลาคม',
-            'נובמבר': 'พฤศจิกายน',
-            'דצמבר': 'ธันวาคม',
-            
-            // כותרות
-            'בוקר טוב': 'สวัสดีตอนเช้า',
-            'תוכנית העבודה ליום': 'แผนการทํางานวันที่',
-            'יום': 'วันที่',
-            
-            // שדות
-            'משק': 'ฟาร์ม',
-            'חלקה': 'แปลง',
-            'כמות': 'จำนวน',
-            'טרקטור': 'รถแทรกเตอร์',
-            'עובדים נוספים': 'พนักงานเพิ่มเติม',
-            'הערות': 'หมายเหตุ',
-            
-            // סגירה
-            'צריך משהו? תכתוב!': 'ต้องการอะไรเพิ่มเติมไหม? โปรดแจ้ง!',
-            'בהצלחה': 'โชคดี'
+        // טעינת נתונים מלאים
+        const INITIAL_DATA = window.SHAMIR_FULL_DATA || {
+            employees: [{name: "שגיאה", active: true}],
+            farms: ["שגיאה בטעינת נתונים"],
+            workTypes: ["בדוק שהקובץ farm-data.js קיים"],
+            tractors: [],
+            farmToPlots: {}
         };
 
-        // נתונים התחלתיים
-        const INITIAL_DATA = {
-            employees: [
-                { name: "טון", active: true },
-                { name: "מעיין", active: true },
-                { name: "באסם", active: true },
-                { name: "פריס", active: true },
-                { name: "הדש", active: true },
-                { name: "נון", active: false },
-            ],
-            
-            farms: ["אבוקדו גל", "גג", "מטעים", "שמיר בגליל", "חוקוק", "כפר גלעדי", "כפר חיטים", "רפת"],
-            
-            workTypes: ["קטיף אבוקדו", "קטיף מנגו", "קטיף ליצ'י", "גיזום", "חרישה", "ריסוס", "חליבה", "דישון", "זריעה"],
-            
-            tractors: ["1400", "3036", "4430", "5105", "5115", "6215", "8280"],
-            
-            farmToPlots: {
-                "מטעים": ["אבוקדו שרה", "אבוקדו מרכז", "ליצ'י צפון", "מנגו דרום"],
-                "שמיר בגליל": ["TOM-01", "AVO-SH-01", "MAN-SH-01", "LIT-SH-01"],
-                "אבוקדו גל": ["אבוקדו שרה", "אבוקדו חדש"],
-                "חוקוק": ["AVO-CH-01", "MAN-CH-01"],
-                "כפר גלעדי": ["1א", "1ב", "2א"],
-                "כפר חיטים": ["בבית", "גדש א"],
-                "רפת": ["רפת"],
-            }
+        // מילון תרגום לתאילנדית
+        const THAI_TRANSLATIONS = {
+            'ראשון': 'วันอาทิตย์', 'שני': 'วันจันทร์', 'שלישי': 'วันอังคาร', 'רביעי': 'วันพุธ',
+            'חמישי': 'วันพฤหัสบดี', 'שישי': 'วันศุกร์', 'שבת': 'วันเสาร์',
+            'בוקר טוב': 'สวัสดีตอนเช้า', 'תוכנית העבודה ליום': 'แผนการทํางานวันที่',
+            'משק': 'ฟาร์ม', 'חלקה': 'แปลง', 'כמות': 'จำนวน', 'טרקטור': 'รถแทรกเตอร์',
+            'צריך משהו? תכתוב!': 'ต้องการอะไรเพิ่มเติมไหม? โปรดแจ้ง!', 'בהצלחה': 'โชคดี'
         };
 
         function WorkManagementApp() {
@@ -141,128 +56,61 @@
             const [farmData, setFarmData] = useState(null);
 
             useEffect(() => {
-                const savedData = localStorage.getItem('farm_data_v2');
-                if (savedData) {
-                    setFarmData(JSON.parse(savedData));
-                } else {
-                    setFarmData(INITIAL_DATA);
-                    localStorage.setItem('farm_data_v2', JSON.stringify(INITIAL_DATA));
-                }
-
+                const saved = localStorage.getItem('farm_data_v2');
+                setFarmData(saved ? JSON.parse(saved) : INITIAL_DATA);
                 const savedTasks = localStorage.getItem('work_tasks_v2');
-                if (savedTasks) {
-                    setTasks(JSON.parse(savedTasks));
-                }
+                if (savedTasks) setTasks(JSON.parse(savedTasks));
             }, []);
 
             useEffect(() => {
-                if (farmData) {
-                    localStorage.setItem('farm_data_v2', JSON.stringify(farmData));
-                }
+                if (farmData) localStorage.setItem('farm_data_v2', JSON.stringify(farmData));
             }, [farmData]);
 
             useEffect(() => {
                 localStorage.setItem('work_tasks_v2', JSON.stringify(tasks));
             }, [tasks]);
 
-            if (!farmData) {
-                return <div className="flex items-center justify-center h-screen">
-                    <div className="text-2xl">טוען...</div>
-                </div>;
-            }
+            if (!farmData) return <div className="flex items-center justify-center h-screen"><div className="text-2xl">טוען...</div></div>;
 
-            const addTask = () => {
-                const newTask = {
-                    id: Date.now(),
-                    date: currentDate,
-                    employee: '',
-                    farm: '',
-                    workType: '',
-                    plot: '',
-                    amount: '',
-                    notes: '',
-                    tractor: '',
-                    status: 'planned',
-                    whatsappSent: false
-                };
-                setTasks([...tasks, newTask]);
-            };
+            const addTask = () => setTasks([...tasks, {
+                id: Date.now(), date: currentDate, employee: '', farm: '', workType: '', plot: '', amount: '', notes: '', tractor: '', status: 'planned', whatsappSent: false
+            }]);
 
-            const updateTask = (id, field, value) => {
-                setTasks(tasks.map(task => 
-                    task.id === id ? { ...task, [field]: value } : task
-                ));
-            };
-
-            const deleteTask = (id) => {
-                setTasks(tasks.filter(task => task.id !== id));
-            };
-
-            const duplicateTask = (task) => {
-                const newTask = { ...task, id: Date.now(), employee: '', whatsappSent: false };
-                setTasks([...tasks, newTask]);
-            };
-
-            const updateFarmData = (newData) => {
-                setFarmData(newData);
-            };
-
-            const translateToThai = (text) => {
-                let translated = text;
-                
-                // תרגום מילים בודדות
-                Object.entries(THAI_TRANSLATIONS).forEach(([hebrew, thai]) => {
-                    translated = translated.replace(new RegExp(hebrew, 'g'), thai);
-                });
-                
-                return translated;
-            };
+            const updateTask = (id, field, value) => setTasks(tasks.map(t => t.id === id ? { ...t, [field]: value } : t));
+            const deleteTask = (id) => setTasks(tasks.filter(t => t.id !== id));
+            const duplicateTask = (task) => setTasks([...tasks, { ...task, id: Date.now(), employee: '', whatsappSent: false }]);
+            const updateFarmData = (newData) => setFarmData(newData);
 
             const generateWhatsAppMessage = (task, inThai = false) => {
                 const employee = task.employee || '[עובד]';
-                const workType = task.workType || '[פעילות]';
-                const farm = task.farm || '[משק]';
-                const plot = task.plot || '[חלקה]';
-                const amount = task.amount || '';
-                const tractor = task.tractor || '';
-                const notes = task.notes || '';
-
                 const date = new Date(task.date);
                 const dayName = date.toLocaleDateString('he-IL', { weekday: 'long' });
-                const formattedDate = date.toLocaleDateString('he-IL', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                });
+                const formatted = date.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
                 if (inThai) {
-                    // תרגום מלא לתאילנדית
-                    const thaiDayName = THAI_TRANSLATIONS[dayName] || dayName;
-                    
-                    let message = `🌅 ${THAI_TRANSLATIONS['בוקר טוב']} ${employee}!\n\n`;
-                    message += `📅 ${THAI_TRANSLATIONS['תוכנית העבודה ליום']} ${thaiDayName} ${formattedDate}:\n\n`;
-                    message += `✅ ${workType}\n`;
-                    message += `🏢 ${THAI_TRANSLATIONS['משק']}: ${farm}\n`;
-                    message += `📍 ${THAI_TRANSLATIONS['חלקה']}: ${plot}\n`;
-                    if (amount) message += `📏 ${THAI_TRANSLATIONS['כמות']}: ${amount}\n`;
-                    if (tractor) message += `🚜 ${THAI_TRANSLATIONS['טרקטור']}: ${tractor}\n`;
-                    if (notes) message += `💬 ${notes}\n`;
-                    message += `\n${THAI_TRANSLATIONS['צריך משהו? תכתוב!']}\n${THAI_TRANSLATIONS['בהצלחה']} 💪`;
-                    
-                    return message;
+                    const thaiDay = THAI_TRANSLATIONS[dayName] || dayName;
+                    let msg = `🌅 ${THAI_TRANSLATIONS['בוקר טוב']} ${employee}!\n\n`;
+                    msg += `📅 ${THAI_TRANSLATIONS['תוכנית העבודה ליום']} ${thaiDay} ${formatted}:\n\n`;
+                    msg += `✅ ${task.workType || ''}\n`;
+                    msg += `🏢 ${THAI_TRANSLATIONS['משק']}: ${task.farm || ''}\n`;
+                    msg += `📍 ${THAI_TRANSLATIONS['חלקה']}: ${task.plot || ''}\n`;
+                    if (task.amount) msg += `📏 ${THAI_TRANSLATIONS['כמות']}: ${task.amount}\n`;
+                    if (task.tractor) msg += `🚜 ${THAI_TRANSLATIONS['טרקטור']}: ${task.tractor}\n`;
+                    if (task.notes) msg += `💬 ${task.notes}\n`;
+                    msg += `\n${THAI_TRANSLATIONS['צריך משהו? תכתוב!']}\n${THAI_TRANSLATIONS['בהצלחה']} 💪`;
+                    return msg;
                 }
 
-                let message = `🌅 בוקר טוב ${employee}!\n\n`;
-                message += `📅 תוכנית העבודה ליום ${dayName} ${formattedDate}:\n\n`;
-                message += `✅ ${workType}\n`;
-                message += `🏢 משק: ${farm}\n`;
-                message += `📍 חלקה: ${plot}\n`;
-                if (amount) message += `📏 כמות: ${amount}\n`;
-                if (tractor) message += `🚜 טרקטור: ${tractor}\n`;
-                if (notes) message += `💬 ${notes}\n`;
-                message += `\nצריך משהו? תכתוב!\nבהצלחה 💪`;
-
-                return message;
+                let msg = `🌅 בוקר טוב ${employee}!\n\n`;
+                msg += `📅 תוכנית העבודה ליום ${dayName} ${formatted}:\n\n`;
+                msg += `✅ ${task.workType || ''}\n`;
+                msg += `🏢 משק: ${task.farm || ''}\n`;
+                msg += `📍 חלקה: ${task.plot || ''}\n`;
+                if (task.amount) msg += `📏 כמות: ${task.amount}\n`;
+                if (task.tractor) msg += `🚜 טרקטור: ${task.tractor}\n`;
+                if (task.notes) msg += `💬 ${task.notes}\n`;
+                msg += `\nצריך משהו? תכתוב!\nבהצלחה 💪`;
+                return msg;
             };
 
             const copyToClipboard = (text, taskId) => {
@@ -272,101 +120,62 @@
                 });
             };
 
-            const todayTasks = tasks.filter(task => task.date === currentDate);
-            const tasksWithMessages = todayTasks.filter(task => task.employee && task.workType);
-            const activeEmployees = farmData.employees.filter(emp => emp.active);
-            const employeesWithoutTasks = activeEmployees.filter(emp => 
-                !todayTasks.some(task => task.employee === emp.name)
-            );
+            const todayTasks = tasks.filter(t => t.date === currentDate);
+            const tasksWithMessages = todayTasks.filter(t => t.employee && t.workType);
+            const activeEmployees = farmData.employees.filter(e => e.active);
+            const employeesWithoutTasks = activeEmployees.filter(e => !todayTasks.some(t => t.employee === e.name));
 
             return (
                 <div className="min-h-screen p-4 md:p-8">
                     <div className="max-w-7xl mx-auto">
-                        {/* Header */}
-                        <div className="bg-white rounded-2xl shadow-2xl p-6 mb-6 fade-in">
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                <div>
-                                    <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                                        🌾 מערכת ניהול עובדים
-                                    </h1>
-                                    <p className="text-gray-600">שמיר בגליל - גרסה 2.1 מתוקנת</p>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-blue-50 px-6 py-3 rounded-xl">
-                                        <label className="text-sm text-gray-600 block mb-1">תאריך</label>
-                                        <input
-                                            type="date"
-                                            value={currentDate}
-                                            onChange={(e) => setCurrentDate(e.target.value)}
-                                            className="text-lg font-semibold text-blue-600 bg-transparent border-none focus:outline-none"
-                                        />
-                                    </div>
-                                    <div className="bg-green-50 px-6 py-3 rounded-xl text-center">
-                                        <div className="text-sm text-gray-600">משימות</div>
-                                        <div className="text-2xl font-bold text-green-600">{todayTasks.length}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Tabs */}
-                        <div className="bg-white rounded-2xl shadow-xl mb-6 overflow-hidden">
-                            <div className="flex overflow-x-auto">
-                                <TabButton onClick={() => setSelectedTab('create')} selected={selectedTab === 'create'} label={`✏️ משימות (${todayTasks.length})`} />
-                                <TabButton onClick={() => setSelectedTab('messages')} selected={selectedTab === 'messages'} label={`📱 WhatsApp (${tasksWithMessages.length})`} />
-                                <TabButton onClick={() => setSelectedTab('report')} selected={selectedTab === 'report'} label="📊 דוח" />
-                                <TabButton onClick={() => setSelectedTab('backoffice')} selected={selectedTab === 'backoffice'} label="⚙️ ניהול" />
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        {selectedTab === 'create' && (
-                            <CreateTasksTab
-                                tasks={todayTasks}
-                                addTask={addTask}
-                                updateTask={updateTask}
-                                deleteTask={deleteTask}
-                                duplicateTask={duplicateTask}
-                                employeesWithoutTasks={employeesWithoutTasks}
-                                farmData={farmData}
-                            />
-                        )}
+                        <Header currentDate={currentDate} setCurrentDate={setCurrentDate} taskCount={todayTasks.length} employeeCount={farmData.employees.length} />
+                        <Tabs selectedTab={selectedTab} setSelectedTab={setSelectedTab} todayTasks={todayTasks} tasksWithMessages={tasksWithMessages} />
                         
-                        {selectedTab === 'messages' && (
-                            <MessagesTab
-                                tasks={tasksWithMessages}
-                                generateWhatsAppMessage={generateWhatsAppMessage}
-                                copyToClipboard={copyToClipboard}
-                            />
-                        )}
-                        
-                        {selectedTab === 'report' && (
-                            <ReportTab tasks={todayTasks} currentDate={currentDate} />
-                        )}
-                        
-                        {selectedTab === 'backoffice' && (
-                            <BackofficeTab
-                                farmData={farmData}
-                                updateFarmData={updateFarmData}
-                                tasks={tasks}
-                                setTasks={setTasks}
-                            />
-                        )}
+                        {selectedTab === 'create' && <CreateTasksTab tasks={todayTasks} addTask={addTask} updateTask={updateTask} deleteTask={deleteTask} duplicateTask={duplicateTask} employeesWithoutTasks={employeesWithoutTasks} farmData={farmData} />}
+                        {selectedTab === 'messages' && <MessagesTab tasks={tasksWithMessages} generateWhatsAppMessage={generateWhatsAppMessage} copyToClipboard={copyToClipboard} />}
+                        {selectedTab === 'report' && <ReportTab tasks={todayTasks} currentDate={currentDate} />}
+                        {selectedTab === 'backoffice' && <BackofficeTab farmData={farmData} updateFarmData={updateFarmData} tasks={tasks} setTasks={setTasks} />}
                     </div>
                 </div>
             );
         }
 
-        function TabButton({ onClick, selected, label }) {
+        function Header({ currentDate, setCurrentDate, taskCount, employeeCount }) {
             return (
-                <button
-                    onClick={onClick}
-                    className={`flex-1 py-4 px-6 font-semibold transition-all whitespace-nowrap ${
-                        selected ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                >
-                    {label}
-                </button>
+                <div className="bg-white rounded-2xl shadow-2xl p-6 mb-6 fade-in">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-800 mb-2">🌾 מערכת ניהול עובדים</h1>
+                            <p className="text-gray-600">שמיר בגליל • {employeeCount} עובדים במערכת</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <div className="bg-blue-50 px-6 py-3 rounded-xl">
+                                <label className="text-sm text-gray-600 block mb-1">תאריך</label>
+                                <input type="date" value={currentDate} onChange={(e) => setCurrentDate(e.target.value)} className="text-lg font-semibold text-blue-600 bg-transparent border-none focus:outline-none" />
+                            </div>
+                            <div className="bg-green-50 px-6 py-3 rounded-xl text-center">
+                                <div className="text-sm text-gray-600">משימות</div>
+                                <div className="text-2xl font-bold text-green-600">{taskCount}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function Tabs({ selectedTab, setSelectedTab, todayTasks, tasksWithMessages }) {
+            const Tab = ({id, label}) => (
+                <button onClick={() => setSelectedTab(id)} className={`flex-1 py-4 px-6 font-semibold transition-all whitespace-nowrap ${selectedTab === id ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{label}</button>
+            );
+            return (
+                <div className="bg-white rounded-2xl shadow-xl mb-6 overflow-hidden">
+                    <div className="flex overflow-x-auto">
+                        <Tab id="create" label={`✏️ משימות (${todayTasks.length})`} />
+                        <Tab id="messages" label={`📱 WhatsApp (${tasksWithMessages.length})`} />
+                        <Tab id="report" label="📊 דוח" />
+                        <Tab id="backoffice" label="⚙️ ניהול" />
+                    </div>
+                </div>
             );
         }
 
@@ -375,26 +184,14 @@
                 <div className="space-y-6">
                     {employeesWithoutTasks.length > 0 && (
                         <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-orange-800 mb-3">
-                                ⚠️ עובדים פעילים ללא משימה ({employeesWithoutTasks.length})
-                            </h3>
+                            <h3 className="text-lg font-semibold text-orange-800 mb-3">⚠️ עובדים פעילים ללא משימה ({employeesWithoutTasks.length})</h3>
                             <div className="flex flex-wrap gap-2">
-                                {employeesWithoutTasks.map(emp => (
-                                    <span key={emp.name} className="bg-white px-3 py-1 rounded-full text-sm shadow-sm">
-                                        {emp.name}
-                                    </span>
-                                ))}
+                                {employeesWithoutTasks.slice(0,20).map(e => <span key={e.name} className="bg-white px-3 py-1 rounded-full text-sm shadow-sm">{e.name}</span>)}
+                                {employeesWithoutTasks.length > 20 && <span className="text-sm px-3 py-1">ועוד {employeesWithoutTasks.length - 20}...</span>}
                             </div>
                         </div>
                     )}
-
-                    <button
-                        onClick={addTask}
-                        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
-                    >
-                        ➕ הוסף משימה חדשה
-                    </button>
-
+                    <button onClick={addTask} className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all">➕ הוסף משימה חדשה</button>
                     <div className="space-y-4">
                         {tasks.length === 0 ? (
                             <div className="bg-white rounded-xl p-12 text-center shadow-lg">
@@ -403,17 +200,7 @@
                                 <p className="text-gray-600">לחץ "הוסף משימה" להתחיל</p>
                             </div>
                         ) : (
-                            tasks.map((task, index) => (
-                                <TaskCard
-                                    key={task.id}
-                                    task={task}
-                                    index={index}
-                                    updateTask={updateTask}
-                                    deleteTask={deleteTask}
-                                    duplicateTask={duplicateTask}
-                                    farmData={farmData}
-                                />
-                            ))
+                            tasks.map((task, idx) => <TaskCard key={task.id} task={task} index={idx} updateTask={updateTask} deleteTask={deleteTask} duplicateTask={duplicateTask} farmData={farmData} />)
                         )}
                     </div>
                 </div>
@@ -421,15 +208,12 @@
         }
 
         function TaskCard({ task, index, updateTask, deleteTask, duplicateTask, farmData }) {
-            const selectedFarmPlots = task.farm && farmData.farmToPlots[task.farm] ? farmData.farmToPlots[task.farm] : [];
-
+            const plots = task.farm && farmData.farmToPlots[task.farm] ? farmData.farmToPlots[task.farm] : [];
             return (
                 <div className="bg-white rounded-xl shadow-lg p-6 border-r-4 border-blue-400">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
-                            <div className="bg-blue-100 text-blue-600 font-bold w-10 h-10 rounded-full flex items-center justify-center">
-                                {index + 1}
-                            </div>
+                            <div className="bg-blue-100 text-blue-600 font-bold w-10 h-10 rounded-full flex items-center justify-center">{index + 1}</div>
                             <h3 className="text-lg font-semibold">משימה #{index + 1}</h3>
                         </div>
                         <div className="flex gap-2">
@@ -437,209 +221,109 @@
                             <button onClick={() => deleteTask(task.id)} className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-sm">🗑️</button>
                         </div>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">👤 עובד</label>
-                            <select
-                                value={task.employee}
-                                onChange={(e) => updateTask(task.id, 'employee', e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">בחר עובד</option>
-                                {farmData.employees.map(emp => (
-                                    <option key={emp.name} value={emp.name}>{emp.name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">🏢 משק</label>
-                            <select
-                                value={task.farm}
-                                onChange={(e) => updateTask(task.id, 'farm', e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">בחר משק</option>
-                                {farmData.farms.map(farm => (
-                                    <option key={farm} value={farm}>{farm}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">⚙️ סוג עבודה</label>
-                            <select
-                                value={task.workType}
-                                onChange={(e) => updateTask(task.id, 'workType', e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">בחר עבודה</option>
-                                {farmData.workTypes.map(wt => (
-                                    <option key={wt} value={wt}>{wt}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">📍 חלקה</label>
-                            {selectedFarmPlots.length > 0 ? (
-                                <select
-                                    value={task.plot}
-                                    onChange={(e) => updateTask(task.id, 'plot', e.target.value)}
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <option value="">בחר חלקה</option>
-                                    {selectedFarmPlots.map(plot => (
-                                        <option key={plot} value={plot}>{plot}</option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <input
-                                    type="text"
-                                    value={task.plot}
-                                    onChange={(e) => updateTask(task.id, 'plot', e.target.value)}
-                                    placeholder="הקלד חלקה"
-                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                                />
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">📏 כמות</label>
-                            <input
-                                type="text"
-                                value={task.amount}
-                                onChange={(e) => updateTask(task.id, 'amount', e.target.value)}
-                                placeholder="7 דונם"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">🚜 טרקטור</label>
-                            <select
-                                value={task.tractor}
-                                onChange={(e) => updateTask(task.id, 'tractor', e.target.value)}
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">בחר טרקטור</option>
-                                {farmData.tractors.map(tractor => (
-                                    <option key={tractor} value={tractor}>{tractor}</option>
-                                ))}
-                            </select>
-                        </div>
-
+                        <Select label="👤 עובד" value={task.employee} onChange={(e) => updateTask(task.id, 'employee', e.target.value)} options={farmData.employees.map(e => e.name)} />
+                        <Select label="🏢 משק" value={task.farm} onChange={(e) => updateTask(task.id, 'farm', e.target.value)} options={farmData.farms} />
+                        <Select label="⚙️ סוג עבודה" value={task.workType} onChange={(e) => updateTask(task.id, 'workType', e.target.value)} options={farmData.workTypes} />
+                        {plots.length > 0 ? <Select label="📍 חלקה" value={task.plot} onChange={(e) => updateTask(task.id, 'plot', e.target.value)} options={plots} /> : <Input label="📍 חלקה" value={task.plot} onChange={(e) => updateTask(task.id, 'plot', e.target.value)} placeholder="הקלד חלקה" />}
+                        <Input label="📏 כמות" value={task.amount} onChange={(e) => updateTask(task.id, 'amount', e.target.value)} placeholder="7 דונם" />
+                        <Select label="🚜 טרקטור" value={task.tractor} onChange={(e) => updateTask(task.id, 'tractor', e.target.value)} options={farmData.tractors} />
                         <div className="md:col-span-2 lg:col-span-3">
-                            <label className="block text-sm font-medium mb-1">💬 הערות</label>
-                            <input
-                                type="text"
-                                value={task.notes}
-                                onChange={(e) => updateTask(task.id, 'notes', e.target.value)}
-                                placeholder="קטיף ב0630"
-                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                            />
+                            <Input label="💬 הערות" value={task.notes} onChange={(e) => updateTask(task.id, 'notes', e.target.value)} placeholder="קטיף ב0630" />
                         </div>
                     </div>
                 </div>
             );
         }
 
-        function MessagesTab({ tasks, generateWhatsAppMessage, copyToClipboard }) {
-            const [showThaiModal, setShowThaiModal] = useState(false);
-            const [selectedTask, setSelectedTask] = useState(null);
+        function Select({ label, value, onChange, options }) {
+            return (
+                <div>
+                    <label className="block text-sm font-medium mb-1">{label}</label>
+                    <select value={value} onChange={onChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">בחר</option>
+                        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                </div>
+            );
+        }
 
-            const sentCount = tasks.filter(t => t.whatsappSent).length;
+        function Input({ label, value, onChange, placeholder }) {
+            return (
+                <div>
+                    <label className="block text-sm font-medium mb-1">{label}</label>
+                    <input type="text" value={value} onChange={onChange} placeholder={placeholder} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                </div>
+            );
+        }
+
+        function MessagesTab({ tasks, generateWhatsAppMessage, copyToClipboard }) {
+            const [showModal, setShowModal] = useState(false);
+            const [selectedTask, setSelectedTask] = useState(null);
+            const sent = tasks.filter(t => t.whatsappSent).length;
 
             return (
                 <div className="space-y-6">
-                    {showThaiModal && selectedTask && (
+                    {showModal && selectedTask && (
                         <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
                             <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 shadow-2xl">
                                 <div className="flex items-center justify-between mb-6">
                                     <h2 className="text-2xl font-bold">🇹🇭 תרגום לתאילנדית</h2>
-                                    <button onClick={() => setShowThaiModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+                                    <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">×</button>
                                 </div>
-                                
                                 <div className="space-y-4">
                                     <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
                                         <h3 className="font-semibold mb-2">🇮🇱 עברית:</h3>
                                         <pre className="whitespace-pre-wrap font-sans text-sm">{generateWhatsAppMessage(selectedTask, false)}</pre>
                                     </div>
-
                                     <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
                                         <h3 className="font-semibold mb-2">🇹🇭 תאילנדית:</h3>
                                         <pre className="whitespace-pre-wrap font-sans text-sm">{generateWhatsAppMessage(selectedTask, true)}</pre>
                                     </div>
-
                                     <div className="flex gap-3">
-                                        <button
-                                            onClick={() => {
-                                                copyToClipboard(generateWhatsAppMessage(selectedTask, true), selectedTask.id);
-                                                setShowThaiModal(false);
-                                            }}
-                                            className="flex-1 bg-green-500 text-white py-3 rounded-xl font-semibold hover:bg-green-600"
-                                        >
-                                            📱 העתק בתאילנדית
-                                        </button>
-                                        <button onClick={() => setShowThaiModal(false)} className="px-6 py-3 bg-gray-200 rounded-xl font-semibold hover:bg-gray-300">ביטול</button>
+                                        <button onClick={() => { copyToClipboard(generateWhatsAppMessage(selectedTask, true), selectedTask.id); setShowModal(false); }} className="flex-1 bg-green-500 text-white py-3 rounded-xl font-semibold hover:bg-green-600">📱 העתק בתאילנדית</button>
+                                        <button onClick={() => setShowModal(false)} className="px-6 py-3 bg-gray-200 rounded-xl font-semibold hover:bg-gray-300">ביטול</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     )}
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="bg-blue-50 rounded-xl p-6 text-center">
                             <div className="text-3xl font-bold text-blue-600">{tasks.length}</div>
                             <div className="text-gray-600 mt-1">סה"כ הודעות</div>
                         </div>
                         <div className="bg-green-50 rounded-xl p-6 text-center">
-                            <div className="text-3xl font-bold text-green-600">{sentCount}</div>
+                            <div className="text-3xl font-bold text-green-600">{sent}</div>
                             <div className="text-gray-600 mt-1">נשלחו</div>
                         </div>
                     </div>
-
                     <div className="space-y-4">
                         {tasks.length === 0 ? (
                             <div className="bg-white rounded-xl p-12 text-center shadow-lg">
                                 <div className="text-6xl mb-4">📱</div>
                                 <h3 className="text-xl font-semibold mb-2">אין הודעות</h3>
-                                <p className="text-gray-600">צור משימות כדי לראות הודעות</p>
                             </div>
                         ) : (
-                            tasks.map((task, index) => {
-                                const message = generateWhatsAppMessage(task);
+                            tasks.map((task, idx) => {
+                                const msg = generateWhatsAppMessage(task);
                                 return (
                                     <div key={task.id} className={`bg-white rounded-xl shadow-lg p-6 border-r-4 ${task.whatsappSent ? 'border-green-400' : 'border-orange-400'}`}>
                                         <div className="flex items-center justify-between mb-4">
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${task.whatsappSent ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
-                                                    {index + 1}
-                                                </div>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${task.whatsappSent ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>{idx + 1}</div>
                                                 <div>
                                                     <h3 className="text-lg font-semibold">{task.employee || 'לא צוין'}</h3>
                                                     <p className="text-sm text-gray-500">{task.whatsappSent ? '✅ נשלח' : '⏳ ממתין'}</p>
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => { setSelectedTask(task); setShowThaiModal(true); }}
-                                                    className="px-4 py-2 bg-purple-100 text-purple-600 rounded-xl font-semibold hover:bg-purple-200"
-                                                >
-                                                    🇹🇭 תאילנדית
-                                                </button>
-                                                <button
-                                                    onClick={() => copyToClipboard(message, task.id)}
-                                                    className={`px-6 py-3 rounded-xl font-semibold ${task.whatsappSent ? 'bg-green-100 text-green-600' : 'bg-green-500 text-white hover:bg-green-600'}`}
-                                                >
-                                                    {task.whatsappSent ? '📋 העתק שוב' : '📱 העתק ושלח'}
-                                                </button>
+                                                <button onClick={() => { setSelectedTask(task); setShowModal(true); }} className="px-4 py-2 bg-purple-100 text-purple-600 rounded-xl font-semibold hover:bg-purple-200">🇹🇭</button>
+                                                <button onClick={() => copyToClipboard(msg, task.id)} className={`px-6 py-3 rounded-xl font-semibold ${task.whatsappSent ? 'bg-green-100 text-green-600' : 'bg-green-500 text-white hover:bg-green-600'}`}>{task.whatsappSent ? '📋 העתק' : '📱 העתק ושלח'}</button>
                                             </div>
                                         </div>
-
                                         <div className="bg-green-50 border-2 border-green-200 rounded-xl p-4">
-                                            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{message}</pre>
+                                            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{msg}</pre>
                                         </div>
                                     </div>
                                 );
@@ -654,70 +338,151 @@
             return (
                 <div className="bg-white rounded-xl shadow-lg p-6">
                     <h2 className="text-2xl font-bold mb-4">📊 דוח יומי</h2>
-                    <div className="text-gray-600">
-                        {tasks.length} משימות ליום {new Date(currentDate).toLocaleDateString('he-IL')}
-                    </div>
+                    <div className="text-gray-600">{tasks.length} משימות ליום {new Date(currentDate).toLocaleDateString('he-IL')}</div>
                 </div>
             );
         }
 
         function BackofficeTab({ farmData, updateFarmData }) {
-            const [newEmployee, setNewEmployee] = useState('');
+            const [section, setSection] = useState('employees');
+            const [newItem, setNewItem] = useState('');
+            const [selectedFarm, setSelectedFarm] = useState('');
+            const [newPlot, setNewPlot] = useState('');
 
             const addEmployee = () => {
-                if (!newEmployee.trim()) return;
-                const updated = {
-                    ...farmData,
-                    employees: [...farmData.employees, { name: newEmployee.trim(), active: true }]
-                };
-                updateFarmData(updated);
-                setNewEmployee('');
+                if (!newItem.trim()) return;
+                updateFarmData({ ...farmData, employees: [...farmData.employees, { name: newItem.trim(), active: true }] });
+                setNewItem('');
             };
 
             const toggleEmployee = (name) => {
-                const updated = {
-                    ...farmData,
-                    employees: farmData.employees.map(emp =>
-                        emp.name === name ? { ...emp, active: !emp.active } : emp
-                    )
-                };
-                updateFarmData(updated);
+                updateFarmData({ ...farmData, employees: farmData.employees.map(e => e.name === name ? { ...e, active: !e.active } : e) });
+            };
+
+            const addFarm = () => {
+                if (!newItem.trim()) return;
+                updateFarmData({ ...farmData, farms: [...farmData.farms, newItem.trim()], farmToPlots: { ...farmData.farmToPlots, [newItem.trim()]: [] } });
+                setNewItem('');
+            };
+
+            const addPlot = () => {
+                if (!selectedFarm || !newPlot.trim()) return;
+                const plots = farmData.farmToPlots[selectedFarm] || [];
+                updateFarmData({ ...farmData, farmToPlots: { ...farmData.farmToPlots, [selectedFarm]: [...plots, newPlot.trim()] } });
+                setNewPlot('');
+            };
+
+            const deletePlot = (plot) => {
+                if (!selectedFarm) return;
+                const plots = farmData.farmToPlots[selectedFarm].filter(p => p !== plot);
+                updateFarmData({ ...farmData, farmToPlots: { ...farmData.farmToPlots, [selectedFarm]: plots } });
+            };
+
+            const addWorkType = () => {
+                if (!newItem.trim()) return;
+                updateFarmData({ ...farmData, workTypes: [...farmData.workTypes, newItem.trim()] });
+                setNewItem('');
             };
 
             return (
                 <div className="space-y-6">
                     <div className="bg-white rounded-xl shadow-lg p-6">
                         <h2 className="text-2xl font-bold mb-4">⚙️ ניהול נתונים</h2>
-                        
-                        <h3 className="text-xl font-bold mb-4 mt-6">👥 עובדים</h3>
-                        <div className="flex gap-3 mb-4">
-                            <input
-                                type="text"
-                                value={newEmployee}
-                                onChange={(e) => setNewEmployee(e.target.value)}
-                                placeholder="שם עובד חדש"
-                                className="flex-1 px-4 py-2 border rounded-lg"
-                                onKeyPress={(e) => e.key === 'Enter' && addEmployee()}
-                            />
-                            <button onClick={addEmployee} className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold">➕ הוסף</button>
+                        <p className="text-gray-600 mb-6">כאן תוכל לערוך את כל העובדים, המשקים, החלקות וסוגי העבודה</p>
+
+                        <div className="flex gap-2 mb-6 overflow-x-auto">
+                            <TabBtn active={section === 'employees'} onClick={() => setSection('employees')}>👥 עובדים ({farmData.employees.length})</TabBtn>
+                            <TabBtn active={section === 'farms'} onClick={() => setSection('farms')}>🏢 משקים ({farmData.farms.length})</TabBtn>
+                            <TabBtn active={section === 'plots'} onClick={() => setSection('plots')}>📍 חלקות</TabBtn>
+                            <TabBtn active={section === 'workTypes'} onClick={() => setSection('workTypes')}>⚙️ סוגי עבודה ({farmData.workTypes.length})</TabBtn>
                         </div>
 
-                        <div className="space-y-2">
-                            {farmData.employees.map(emp => (
-                                <div key={emp.name} className={`flex items-center justify-between p-3 rounded-lg border-2 ${emp.active ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
-                                    <span className="font-semibold">{emp.name}</span>
-                                    <button
-                                        onClick={() => toggleEmployee(emp.name)}
-                                        className={`px-3 py-1 rounded-lg text-sm ${emp.active ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}
-                                    >
-                                        {emp.active ? '🔴 השבת' : '🟢 הפעל'}
-                                    </button>
+                        {section === 'employees' && (
+                            <div>
+                                <div className="flex gap-3 mb-4">
+                                    <input type="text" value={newItem} onChange={(e) => setNewItem(e.target.value)} placeholder="שם עובד חדש" className="flex-1 px-4 py-2 border rounded-lg" onKeyPress={(e) => e.key === 'Enter' && addEmployee()} />
+                                    <button onClick={addEmployee} className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold">➕ הוסף</button>
                                 </div>
-                            ))}
-                        </div>
+                                <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+                                    {farmData.employees.map(e => (
+                                        <div key={e.name} className={`flex items-center justify-between p-3 rounded-lg border-2 ${e.active ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}`}>
+                                            <span className="font-semibold">{e.name}</span>
+                                            <button onClick={() => toggleEmployee(e.name)} className={`px-3 py-1 rounded-lg text-sm ${e.active ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>{e.active ? '🔴 השבת' : '🟢 הפעל'}</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {section === 'farms' && (
+                            <div>
+                                <div className="flex gap-3 mb-4">
+                                    <input type="text" value={newItem} onChange={(e) => setNewItem(e.target.value)} placeholder="שם משק חדש" className="flex-1 px-4 py-2 border rounded-lg" onKeyPress={(e) => e.key === 'Enter' && addFarm()} />
+                                    <button onClick={addFarm} className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold">➕ הוסף</button>
+                                </div>
+                                <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+                                    {farmData.farms.map(f => (
+                                        <div key={f} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
+                                            <div>
+                                                <span className="font-semibold">{f}</span>
+                                                <span className="text-sm text-gray-600 mr-2">({farmData.farmToPlots[f]?.length || 0} חלקות)</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {section === 'plots' && (
+                            <div>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium mb-1">בחר משק</label>
+                                    <select value={selectedFarm} onChange={(e) => setSelectedFarm(e.target.value)} className="w-full px-4 py-2 border rounded-lg">
+                                        <option value="">בחר משק</option>
+                                        {farmData.farms.map(f => <option key={f} value={f}>{f}</option>)}
+                                    </select>
+                                </div>
+                                {selectedFarm && (
+                                    <>
+                                        <div className="flex gap-3 mb-4">
+                                            <input type="text" value={newPlot} onChange={(e) => setNewPlot(e.target.value)} placeholder="שם חלקה חדשה" className="flex-1 px-4 py-2 border rounded-lg" onKeyPress={(e) => e.key === 'Enter' && addPlot()} />
+                                            <button onClick={addPlot} className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold">➕ הוסף</button>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {(farmData.farmToPlots[selectedFarm] || []).map(p => (
+                                                <div key={p} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
+                                                    <span>{p}</span>
+                                                    <button onClick={() => deletePlot(p)} className="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-sm">🗑️</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                        {section === 'workTypes' && (
+                            <div>
+                                <div className="flex gap-3 mb-4">
+                                    <input type="text" value={newItem} onChange={(e) => setNewItem(e.target.value)} placeholder="סוג עבודה חדש" className="flex-1 px-4 py-2 border rounded-lg" onKeyPress={(e) => e.key === 'Enter' && addWorkType()} />
+                                    <button onClick={addWorkType} className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold">➕ הוסף</button>
+                                </div>
+                                <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
+                                    {farmData.workTypes.map(w => (
+                                        <div key={w} className="p-3 bg-gray-50 rounded-lg border-2 border-gray-200">
+                                            <span className="font-semibold">{w}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
+        }
+
+        function TabBtn({ active, onClick, children }) {
+            return <button onClick={onClick} className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${active ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>{children}</button>;
         }
 
         ReactDOM.render(<WorkManagementApp />, document.getElementById('root'));
